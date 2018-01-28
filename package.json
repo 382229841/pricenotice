@@ -1,0 +1,32 @@
+{
+  "name": "nodejs-getting-started",
+  "description": "getting started with nodejs on sinacloud platform",
+  "version": "0.0.1",
+  "private": true,
+  "author": {
+    "name": "sae",
+    "email": "saemail@sina.cn"
+  },
+  "dependencies": {
+    "@alicloud/sms-sdk": "^1.0.2",
+    "body-parser": "~1.18.2",
+    "cookie-parser": "~1.4.3",
+    "debug": "~2.6.9",
+    "express": "~4.15.5",
+    "hbs": "~4.0.1",
+    "https": "^1.0.0",
+    "jsdom": "^11.2.0",
+    "md5": "^2.2.1",
+    "morgan": "~1.9.0",
+    "mysql": "^2.15.0",
+    "node-schedule": "^1.2.4",
+    "serve-favicon": "~2.4.5"
+  },
+  "engines": {
+    "node": "8.4.0",
+    "npm": "5.4.1"
+  },
+  "scripts": {
+    "start": "node ./bin/www"
+  }
+}

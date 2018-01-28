@@ -1,0 +1,528 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var app = require('../app');
+var debug = require('debug')('expressjs:server');
+
+var http = require("https");
+var http1 = require("http");
+var schedule = require('node-schedule');
+
+var priceArr = [];
+var goodArr = require('./../priceNotice.js').priceNotice;
+
+var monitorPool = {};
+
+function getRequest(url) {
+    if(url.indexOf('?')===-1){
+        return {
+            url:url,
+            qs:{}
+        };
+    }
+    var searchString = url.split('?')[1];
+    var path=url.split('?')[0];
+    var params = searchString.split("&");
+    var hash = {};
+
+    if (searchString == "") return {};
+    for (var i = 0; i < params.length; i++) {
+        // 获取等号位置
+        var pos = params[i].indexOf('=');
+        if (pos == -1) { continue; }
+        // 获取name 和 value
+        var paraName = params[i].substring(0, pos),
+            paraValue = params[i].substring(pos + 1);
+        hash[paraName] = paraValue;
+    }
+    return {
+        url:path,
+        qs:hash
+    };
+}
+function getNoticeInfo(body,url,name,type){
+    const jsdom = require("jsdom");
+    const { JSDOM } = jsdom;
+
+    const virtualConsole = new jsdom.VirtualConsole();
+    virtualConsole.sendTo(console, { omitJSDOMErrors: true });
+
+    const dom = new JSDOM(body.toString(), { virtualConsole });
+    var price="",title="",gImg="",isInStock=false,priceBox=null,stockBox=null;
+    if(url.indexOf("m.cincottachemist.com.au")>-1){
+        priceBox=dom.window.document.querySelector(".price-box");
+        console.log(`dom${type}`, priceBox?priceBox.textContent : "0")
+        console.log(`-------------------dom----${name}-----------------`)
+        if (priceBox) {
+            price = priceBox.textContent || "0"; //priceblock_dealprice
+        }
+        if (price) {
+            price = price.trim();
+        }
+        stockBox=dom.window.document.querySelector(".add-to-box .add-to-cart");
+        console.log(`-------------------stock cincottachemist dom(${stockBox.textContent})-----------`)
+        if(stockBox){
+          isInStock=true;
+        }
+    }else if(url.indexOf("www.chemistwarehouse.com.au")>-1){
+        priceBox = dom.window.document.querySelector(".Price");
+        console.log(`dom${type}`, priceBox?priceBox.textContent : "0")
+        console.log(`-------------------dom----${name}-----------------`)
+        if (priceBox) {
+            price = priceBox.textContent || "0"; //priceblock_dealprice
+        }
+        if (price) {
+            price = price.trim();
+        }
+        stockBox=dom.window.document.querySelector(".Add2Cart");
+        console.log(`-------------------stock chemistwarehouse dom(style display:${stockBox.style.display})----------`)
+        if(stockBox.style.display=='none'){
+          isInStock=true;
+        }
+    }else if(url.indexOf("www.maccosmetics.com")>-1){
+        priceBox = dom.window.document.querySelector(".product__footer .product__price--standard");
+        console.log(`dom${type} ${priceBox}`, priceBox?priceBox.textContent : "0666666666666666666666666666")
+        console.log(`-------------------dom----${name}-----------------`)
+        if (priceBox) {
+            price = priceBox.textContent || "0"; //priceblock_dealprice
+        }
+        if (price) {
+            price = price.trim();
+        }
+        stockBox=dom.window.document.querySelector(".product__add-to-bag.js-add-to-bag.hide-non-shoppable-product.hide-non-orderable-product");
+        console.log(`-------------------stock maccosmetics dom(style display:${stockBox})----------`)
+        if(stockBox && stockBox.style.display=='block'){
+          isInStock=true;
+        }        
+
+    }else{
+        // price
+        priceBox = dom.window.document.querySelector("#prcIsum") ||  //ebay
+                    dom.window.document.querySelector("#priceblock_ourprice") || //amazon
+                    dom.window.document.querySelector("#priceblock_dealprice") || //amazon
+                    dom.window.document.querySelector("#priceblock_saleprice") || //amazon
+                    dom.window.document.querySelector(".product-price")
+                    ;
+        console.log(`dom${type}`, priceBox?priceBox.textContent : "0")
+        console.log(`-------------------dom----${name}-----------------`)
+        if (priceBox) {
+            price = priceBox.textContent || "0"; //priceblock_dealprice
+        }
+        if (price) {
+            price = price.trim();
+        }
+
+        //title
+        title = dom.window.document.querySelector("#itemTitle") ||
+                    dom.window.document.querySelector("#productTitle");
+        if(title){
+            title=title.textContent;
+            title=title.trim();
+        }  
+        //imgs      
+        gImg = dom.window.document.querySelector("#icImg") ||
+                    dom.window.document.querySelector("#imgTagWrapperId img");
+        if(gImg){
+            gImg=gImg.src;
+        }else{
+            gImg="";
+        }
+
+        stockBox = dom.window.document.querySelector("#availability span") ||
+                   dom.window.document.querySelector(".product-stock");
+        if (stockBox) {
+            var stockText = stockBox.textContent;
+            stockText = stockText.trim();
+            console.log(`-------------------stock normal dom(${stockText})---------------------`)
+            if (stockText.indexOf('in stock') > -1 || stockText.indexOf('In stock')>-1) {
+                isInStock = true;
+            }
+        }
+    }
+    return {
+        price:price,
+        title:title,
+        img:gImg,
+        stock:isInStock
+    }
+}
+function getPriceByUrl(cb,url,phones,name,type,goodId,good){
+    var request = require("request");
+
+    var options = {
+      method: 'GET',
+      url: getRequest(url).url,
+      qs: getRequest(url).qs,
+      timeout:5*60000,
+      headers: 
+      {
+         'cache-control': 'no-cache' 
+      }
+    };
+    request(options, function (error, response, body) {
+      if (error) {
+        console.log(`timeout:${url}`)
+        cb&&cb(false);
+      }else{
+        console.log(`response success:${url}`)
+        var info=getNoticeInfo(body,url,name,type);
+        var link = url;
+        var externalParam={};
+        externalParam.img = info.img;
+        externalParam.link = link;
+        externalParam.name = name;
+        externalParam.stock = info.stock;
+        externalParam.noticeType = type;
+        externalParam.goodId=goodId;
+        externalParam.expectPrice=good.expectPrice;
+        price=info.price;
+        title=info.title;
+        cb&&cb(true,price,title,phones,externalParam);
+      }
+    });
+}
+
+function sendSMS(price, oldPrice, title, phones) {
+    /**
+     * 云通信基础能力业务短信发送、查询详情以及消费消息示例，供参考。
+     * Created on 2017-07-31
+     */
+    const SMSClient = require('@alicloud/sms-sdk')
+    // ACCESS_KEY_ID/ACCESS_KEY_SECRET 根据实际申请的账号信息进行替换
+    const accessKeyId = 'LTAItYbuQ6NFeKFD'
+    const secretAccessKey = 'hy5uh50xciYjQxOoxjYpaWQNKAyPCY'
+    //初始化sms_client
+    let smsClient = new SMSClient({ accessKeyId, secretAccessKey })
+    //发送短信
+    //console.log('{"price":"'+price+'","oldPrice":"'+oldPrice+'","title":"'+title+'"}')
+    smsClient.sendSMS({
+            PhoneNumbers: phones,
+            SignName: '海淘雷达',
+            TemplateCode: 'SMS_94715001',
+            TemplateParam: '{"price":"' + price + '","oldPrice":"' + oldPrice + '","title":"' + title + '"}'
+        })
+        .then(function(res) {
+            let { Code } = res
+            if (Code === 'OK') {
+                //处理返回参数
+                //console.log(res)
+            }
+        }, function(err) {
+            //console.log(err)
+        })
+}
+
+function sendStockSMS(price, title, phones) {
+    /**
+     * 云通信基础能力业务短信发送、查询详情以及消费消息示例，供参考。
+     * Created on 2017-07-31
+     */
+    const SMSClient = require('@alicloud/sms-sdk')
+    // ACCESS_KEY_ID/ACCESS_KEY_SECRET 根据实际申请的账号信息进行替换
+    const accessKeyId = 'LTAItYbuQ6NFeKFD'
+    const secretAccessKey = 'hy5uh50xciYjQxOoxjYpaWQNKAyPCY'
+    //初始化sms_client
+    let smsClient = new SMSClient({ accessKeyId, secretAccessKey })
+    //发送短信
+    //console.log('{"price":"'+price+'","oldPrice":"'+oldPrice+'","title":"'+title+'"}')
+    smsClient.sendSMS({
+            PhoneNumbers: phones,
+            SignName: '海淘雷达',
+            TemplateCode: 'SMS_97805037',
+            TemplateParam: '{"name":"' + title + '","price":"' + price + '"}'
+        })
+        .then(function(res) {
+            let { Code } = res
+            if (Code === 'OK') {
+                //处理返回参数
+                //console.log(res)
+            }
+        }, function(err) {
+            //console.log(err)
+        })
+}
+function getMinitorGoodList(cb){
+    var query = require('../models/index');
+    var sql=sql=`select * from goods where status=1`;// and categery_code=01001
+    query(sql,function(err,vals,fields){
+        //console.log(vals)
+        if(err){
+            cb&&cb([]);
+        }
+        cb&&cb(vals);
+    });
+
+
+}
+Date.prototype.format = function (format) {
+    var o = {
+        "M+": this.getMonth() + 1,
+        "d+": this.getDate(),
+        "h+": this.getHours(),
+        "m+": this.getMinutes(),
+        "s+": this.getSeconds(),
+        "q+": Math.floor((this.getMonth() + 3) / 3),
+        "S": this.getMilliseconds(),
+        "w+": Date.getWeek(this.getDay())
+    };
+
+
+    if (/(y+)/.test(format)) {
+        format = format.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+    }
+    for (var k in o) if (new RegExp("(" + k + ")").test(format)) {
+        format = format.replace(RegExp.$1, RegExp.$1.length == 1 ? o[k] : ("00" + o[k]).substr(("" + o[k]).length));
+    }
+    return format;
+};
+Date.getWeek = function (e) {
+    this.aWeek = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    return this.aWeek[e];
+}
+/**
+ * 字符串日期格式转换成时间格式
+ * eg：Date.ParseString("2010-01-01") => Fri Jan 01 2010 00:00:00 GMT+0800 (中国标准时间)
+ */
+Date.ParseString = function (e) {
+    var b = /(\d{4})-(\d{1,2})-(\d{1,2})(?:\s+(\d{1,2}):(\d{1,2}):(\d{1,2}))?/i,
+        a = b.exec(e),
+        c = 0,
+        d = null;
+    if (a && a.length) {
+        if (a.length > 5 && a[6]) {
+            c = Date.parse(e.replace(b, "$2/$3/$1 $4:$5:$6"));
+        } else {
+            c = Date.parse(e.replace(b, "$2/$3/$1"));
+        }
+    } else {
+        c = Date.parse(e);
+
+    }
+    if (!isNaN(c)) {
+        d = new Date(c);
+    }
+    return d;
+};
+function updatePriceAndStock(price,stock,id){
+    var query = require('../models/index');
+    var updatetime=(new Date()).format("yyyy-MM-dd hh:mm:ss");
+    var sql=sql=`update goods set price='${price}',stock='${stock}',updatetime='${updatetime}' where id=${id}`;// and categery_code=01001
+    query(sql,function(err,vals,fields){
+        //console.log(vals)
+        if(err){
+            
+        }        
+    });
+}
+
+var priceJobByUrl=function(){
+    //var goodArrByUrl = require('./../priceNoticeByUrl.js').priceNoticeByUrl;
+
+    var md5=require("md5");
+    var strPrice2Float=function(strPrice){
+        var p=0;
+        try{
+            if(strPrice.indexOf(',')>-1){
+                strPrice=strPrice.replace(',','.');
+            }
+            if(strPrice.indexOf('$')>-1){
+                var arr=strPrice.split('$');
+                if(arr.length>1){
+                    p=arr[1];
+                    p=parseFloat(p);
+                }
+            }else if(strPrice.indexOf('£')>-1){
+                var arr=strPrice.split('£');
+                if(arr.length>1){
+                    p=arr[1];
+                    p=parseFloat(p);
+                }
+            }else if(strPrice.indexOf('EUR')>-1){
+                var arr=strPrice.split('EUR');
+                if(arr.length>1){
+                    p=arr[1];
+                    p=parseFloat(p);
+                }
+            }else if(strPrice.indexOf('¥')>-1){
+                var arr=strPrice.split('¥');
+                if(arr.length>1){
+                    p=arr[1];
+                    p=parseFloat(p);
+                }
+            }else{
+                p=parseFloat(strPrice);
+            }
+        }catch(e){}
+        return p;
+    }
+    getMinitorGoodList(function(goodArrByUrl){
+        goodArrByUrl=goodArrByUrl || [];
+        monitorPool={};
+        for(var j=0;j<goodArrByUrl.length;j++){            
+            var good=goodArrByUrl[j];
+            //console.log("for:"+good.id)
+            monitorPool[good.id]=good.price;
+        }
+        //console.log("monitorPool:",JSON.stringify(monitorPool));
+        //return;
+        goodArrByUrl=goodArrByUrl || [];
+        for(var i=0;i<goodArrByUrl.length;i++){
+            var good=goodArrByUrl[i];
+            console.log(`${i+1}-${good.name};${good.noticePhone}`)
+            //if(good.noticeType==2)
+            if(good.status==1){
+                getPriceByUrl(function(isOk,price,title,phones,o){
+                    //console.log("result:",JSON.stringify(o))
+                    if(isOk){
+                        var tmpStock=o.stock?1:0;
+                        if(price)
+                            updatePriceAndStock(price,tmpStock,o.goodId);
+                        
+                        var key=o.goodId;
+                        var newPrice=strPrice2Float(price);
+                        var oldPrice=strPrice2Float(monitorPool[key]);
+                        var expectPrice=strPrice2Float(o.expectPrice);
+                        console.log(`newPrice ${title}:`,newPrice)
+                        console.log(`oldPrice ${title}:`,oldPrice)
+                        
+                        if(o.noticeType==1 || o.noticeType==0){
+                            if(o.expectPrice && (newPrice==expectPrice || newPrice<expectPrice)){
+                                if(newPrice>0){
+                                    console.log("monitorPool price change:",JSON.stringify(monitorPool));
+                                    sendSMS(price, monitorPool[key], o.name+" "+title, phones);
+                                }
+                            }else{
+                                if(monitorPool[key] && newPrice!=oldPrice && newPrice<oldPrice){
+                                    if(newPrice>0){
+                                        console.log("monitorPool price change:",JSON.stringify(monitorPool));
+                                        sendSMS(price, monitorPool[key], o.name+" "+title, phones);
+                                    }
+                                }else{
+                                    monitorPool[key]=price;
+                                }
+                            }
+                            console.log("monitorPool:",JSON.stringify(monitorPool));
+                        }
+                        if(o.noticeType==2 || o.noticeType==0){
+                            if(o.stock){
+                                console.log("monitorPool stock change:",JSON.stringify(monitorPool));
+                                sendStockSMS(price, o.name+" "+title, phones);
+                            }
+                        }
+
+                    }else{
+
+                    }
+                },good.url,good.noticePhone,good.name,good.noticeType,good.id,good);
+            }
+        }
+    })
+    
+}
+//定时任务
+var rule = new schedule.RecurrenceRule();
+//rule.second = [10];
+rule.minute = [0, 15, 30, 45];
+//job start
+var j = schedule.scheduleJob(rule, function() {
+  if(process.env.NODE_ENV==="product"){
+      //priceJob(); //移除10.15
+      //instockJob(); //移除10.18
+      priceJobByUrl();
+  }
+  
+});
+if(process.env.NODE_ENV!=="product"){
+    priceJobByUrl();
+}
+
+//getPriceByUrl(null,"https://www.google.com")
+
+
+
+
+
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || '3000');
+app.set('port', port);
+
+/**
+ * Create HTTP server.
+ */
+
+var server = http1.createServer(app);
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}

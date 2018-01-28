@@ -1,0 +1,367 @@
+<div class="container">
+    <div id="cc" class="easyui-layout" style="width:1220px;min-height:500px;margin:0 auto;">
+        <!-- tree -->
+        <div data-options="region:'west',split:false" style="width:200px;">
+            <ul id="tree"></ul>
+        </div>
+        <!-- .add or edit form -->
+        <div data-options="region:'east',split:false" style="width:350px;text-align: center;">
+            <div id="actions" style="padding:20px 20px;margin:0 auto;visibility:hidden">
+                <a href="javascript:;" class="easyui-linkbutton" id="btn-add" onclick="add(event);" data-options="iconCls:'icon-add'" style="width:80px">新增</a>
+                <a href="javascript:;" class="easyui-linkbutton" id="btn-del" onclick="del(event);" data-options="iconCls:'icon-remove',disabled:true" style="width:80px">刪除</a>
+                <a href="javascript:void(0);" class="easyui-linkbutton" id="btn-save" onclick="save(event);" data-options="iconCls:'icon-edit',disabled:true" style="width:80px">保存</a>
+            </div>
+            <div>
+                <form id="ff" method="post" style="visibility:hidden">
+                    <table cellpadding="5" style="padding:0px 5px;margin:0 auto;text-align: left;">
+                        <tr>
+                            <td style="width:65px;"><b>商品名称</b>*:</td>
+                            <td>
+                                <input style="width: 220px;" class="easyui-textbox" type="text" name="name" data-options="required:true"></input>
+                            </td>
+                            <td style="display: none;">
+                                <input class="easyui-textbox" type="hidden" name="id" value="0"></input>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><b>商品链接*</b></td>
+                            <td>
+                                <input style="width: 220px;" class="easyui-textbox" type="text" name="url" data-options="required:true,validType:'url',multiline:true,height:80"></input>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>提醒类型</td>
+                            <td>
+                                <select style="width: 220px;" class="easyui-combobox" id="noticeType" name="noticeType"  data-options="editable:false">                                    
+                                    <option value="1">价格</option>
+                                    <option value="2">到货</option>
+                                    <option value="0">全部提醒</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>预期价格</td>
+                            <td>
+                                <input style="width: 220px;" placeholder="例如:22.5" class="easyui-textbox" type="text" name="expectPrice" data-options="validType:'intOrFloat'"></input>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><b>短信通知*</b></td>
+                            <td>
+                                <input style="width: 220px;" class="easyui-textbox" name="noticePhone" data-options="required:true,validType:'mobile'" placeholder="请输入要通知的手机号码"></input>
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
+        </div>
+        <!-- .list -->
+        <div data-options="region:'center'" style="width:670px;">
+            <table id="dg"></table>
+        </div>
+        <!-- .header -->
+        <div class="header" data-options="region:'north',split:false">
+            <div class="avatar">
+                <img src="/images/avatar.png" />
+                <span>{{user.name}}</span>
+            </div>
+            <div class="action">
+                <span>你好！</span>
+                <img id="logout" src="/images/log-out.png" />
+            </div>
+        </div>
+        <!-- .footer -->
+        <div class="footer" data-options="region:'south',split:false">
+            <div class="action">
+                <div>*期待你关于任何问题或建议的 <a href="javascript:;" onclick="response()">反馈</a></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+var hostlist=[];
+$('#tree')
+    .tree({
+        url: '/apis/getTreeData',
+        method: 'post',
+        checkbox: function(node) {
+            if (node.id) {
+                //return true;
+            }
+        },
+        loadFilter: function(data) {
+            if (data.status = 200) {
+                hostlist=data.data[0].children;
+                return data.data;
+            } else {
+                return [];
+            }
+        },
+        onClick: function(node){
+            if(node && node.code){
+                $('#dg').datagrid('load',{
+                    code: node.code
+                });
+            }else{
+                $('#dg').datagrid('load',{
+                    timestamp:(new Date()).getTime()
+                });
+            }
+        }
+    });
+
+function getChecked() {
+    var ids = [];
+    var rows = $('#dg').datagrid('getChecked');
+    for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        ids.push(row.id);
+    }
+    return ids;
+}
+
+function updateMtStatus(status, cb) {
+    var ids = getChecked();
+    var msg=status==0?'停止':'启动';
+    if (!ids || (ids && ids.length < 1)) {
+        $.messager.alert('提示', `请选择要${msg}监控的商品`);
+        return;
+    }
+    var data = { status: status, ids: ids.join(',') };
+    $.ajax({
+        url: '/apis/updateMonitorStatus',
+        data: data,
+        type: "POST",
+        success: function() {
+            cb && cb(true);
+            //$('#dg').datagrid('clearChecked');
+            $('#dg').datagrid('reload'); 
+                      
+        },
+        error: function() {
+            cb && cb(false);
+        }
+    });
+}
+function toast(msg){
+    $.messager.show({
+        title: '',
+        msg: msg,
+        timeout: 1500,
+        showType:'show',
+        style:{
+            right:'',
+            top:document.body.scrollTop+document.documentElement.scrollTop,
+            bottom:''
+        }
+    })
+}
+$('#dg')
+    .datagrid({
+        url: '/apis/getGoodList',
+        //method:'get',
+        columns: [
+            [
+                { field: 'isopen', checkbox: true },
+                { field: 'name', title: '商品名称', width: 190, align: 'center' },
+                { field: 'price', title: '最新价格', width: 80, align: 'center' },
+                { field: 'stock', title: '库存', width: 40, align: 'center' },
+                { field: 'noticeTypeS', title: '提醒类型', width: 60, align: 'center' },
+                { field: 'status', title: '监控状态', width: 60, align: 'center' },
+                { field: 'updatetime', title: '更新时间', width: 120, align: 'center' }
+            ]
+        ],
+        loadFilter: function(data) {
+            if (data.status = 200) {
+                var list = data.data;
+                for (var i = 0; i < list.length; i++) {
+                    list[i].stock = list[i].stock == "0" ? "无" : "有";
+                    if (list[i].noticeType == 1) {
+                        list[i].stock = "-";
+                        list[i].noticeTypeS = "<span style='color:red;'>价</span>";
+                    }
+                    if (list[i].noticeType == 2) {
+                        list[i].noticeTypeS = "<span style='color:blue;'>库</span>";
+                    }
+                    if (list[i].noticeType == 0) {
+                        list[i].noticeTypeS = "价;库";
+                    }
+                    list[i].status = list[i].status == 0 ?
+                        "<span style='color:red;'>关</span>" :
+                        "<span style='color:green;'>开</span>";
+                }
+                return list;
+            } else {
+                return [];
+            }
+        },
+        checkOnSelect: false,
+        selectOnCheck: false,
+        singleSelect: true,
+        toolbar: [{
+                text: '启动监控',
+                iconCls: 'icon-start',
+                handler: function() {
+                    updateMtStatus(1, function(r) {
+                        if (r) {
+                            $.messager.show({
+                                title: '',
+                                msg: '成功启动',
+                                timeout: 1500,
+                                showType:'show',
+                                style:{
+                                    right:'',
+                                    top:document.body.scrollTop+document.documentElement.scrollTop,
+                                    bottom:''
+                                }
+                            })
+                        }
+                    });
+                }
+            }, {
+                text: '停止监控',
+                iconCls: 'icon-stop',
+                handler: function() {
+                    updateMtStatus(0, function(r) {
+                        if (r) {
+                            $.messager.show({
+                                title: '',
+                                msg: '成功停止',
+                                timeout: 1500,
+                                showType:'show',
+                                style:{
+                                    right:'',
+                                    top:document.body.scrollTop+document.documentElement.scrollTop,
+                                    bottom:''
+                                }
+                            })
+                        }
+                    });
+                }
+            }
+            /*,'-',{
+                        text:'导入商品',
+                        iconCls:'icon-import',
+                        handler:function(){alert('save')}
+                    },{
+                        text:'导出商品',
+                        iconCls:'icon-export',
+                        handler:function(){alert('save')}
+                    }*/
+        ],
+        onClickRow:function(index,row){
+            $('#ff').form('load',{
+                id:row.id,
+                name:row.name,
+                url:row.url,
+                noticeType:row.noticeType,
+                expectPrice:row.expectPrice,
+                noticePhone:row.noticePhone
+            });
+            editBtnState();
+        }
+    });
+$("#logout")
+    .on("click", function() {
+        location.href = "/login";
+    });
+setTimeout(function() {
+    //$("#ff").css("visibility", "visible");
+    $("#actions").css("visibility", "visible");
+}, 300)
+
+
+function response(){
+    $.messager.alert('反馈', `QQ:382229841 <br /> Email:382229841@qq.com`);
+}
+function save(e){
+    e.preventDefault();
+    $('#ff').form('submit',{
+        url:"/apis/saveGoods",
+        success:function(data){        
+            data=JSON.parse(data);            
+            if(data.status===200 && data.data==true){
+                toast('保存成功')            
+                $('#dg').datagrid('reload');
+                clearForm();                               
+            }else{
+                $.messager.alert(data.msg || '提示','服务器繁忙，请重试。');
+            }
+        }
+    });
+}
+function del(e){
+    $('#ff').form('submit',{
+        url:"/apis/deleteGoods",
+        success:function(data){        
+            data=JSON.parse(data);            
+            if(data.status===200 && data.data==true){
+                toast('删除成功')            
+                $('#dg').datagrid('reload');
+                clearForm();
+                initBtnState();          
+            }else{
+                $.messager.alert(data.msg || '提示','服务器繁忙，请重试。');
+            }
+        }
+    });
+}
+function add(e){
+    addBtnState();
+    $('#dg').datagrid('clearSelections');
+    clearForm();
+}
+function addBtnState(){
+    $("#ff").css("visibility", "visible");
+    $('#btn-save').linkbutton({
+        disabled: false
+    });
+    $('#btn-add').linkbutton({
+        disabled: true
+    });
+    $('#btn-del').linkbutton({
+        disabled: true
+    });
+}
+function initBtnState(){
+    $("#ff").css("visibility", "hidden");
+    $('#btn-save').linkbutton({
+        disabled: true
+    });
+    $('#btn-add').linkbutton({
+        disabled: false
+    });
+    $('#btn-del').linkbutton({
+        disabled: true
+    });
+}
+function editBtnState(){
+    $("#ff").css("visibility", "visible");
+    $('#btn-save').linkbutton({
+        disabled: false
+    });
+    $('#btn-add').linkbutton({
+        disabled: false
+    });
+    $('#btn-del').linkbutton({
+        disabled: false
+    });
+}
+function clearForm(){
+    $('#ff').form('clear');
+    $('#noticeType').combobox({
+        value:1
+    });
+}
+$(function(){ window.onload = numberInputPlaceholder(); }); /** easyui number placeholder */ 
+
+function numberInputPlaceholder(){ 
+    $(".easyui-textbox").each(function(i){ 
+        var span = $(this).siblings("span")[0];
+        var targetInput = $(span).find("input:first");
+        if(targetInput){ 
+            $(targetInput).attr("placeholder", $(this).attr("placeholder")); 
+        } 
+    }); 
+}
+</script>

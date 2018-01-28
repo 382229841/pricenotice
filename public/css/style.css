@@ -1,0 +1,102 @@
+body {
+  padding: 0;
+  margin:0;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+.content{
+	text-align: center;
+}
+.content .blank{
+	height: 50px;
+	margin:0;
+	padding: 0;
+	width: 100%;
+}
+.content .panel{
+	margin:0 auto;
+	text-align: center;
+}
+.content .easyui-tabs{
+	margin:0 auto;
+	text-align: center;
+}
+.header{
+	background-color: #add8e5;
+	border:0;
+	margin-bottom: 5px;
+	height: 45px;
+	overflow: hidden;
+}
+.header .avatar{
+	float: left;
+	height: 45px;
+	width: 20%;
+	position: relative;
+}
+.header .avatar img{
+	height: 30px;
+	position: absolute;
+	left: 15px;
+	top:5px;
+}
+.header .avatar span{
+	position: absolute;
+	left:55px;
+	top:18px;
+	
+}
+.header .action{
+	float: right;
+	height: 45px;
+	width: 30%;
+	position: relative;
+}
+.header .action img{
+	position: absolute;
+	height: 20px;
+	right: 15px;
+	top:14px;
+	cursor: pointer;
+}
+.header .action span{
+	position: absolute;
+	right:40px;
+	top:18px;
+}
+.footer{
+	border:0;
+	height: 40px;
+	margin-top: 5px;
+}
+.footer .action{
+	height: 35px;
+	line-height: 35px;
+	border: 1px solid #add8e5;
+
+}
+.footer .action div{
+	text-align: right;
+	padding-right: 20px;
+}
+.container{
+	padding: 0 5px;
+	padding-right: 15px;
+	min-width: 1215px;
+}
+.tree-node {
+    padding: 5px 0;
+}
+
+.validatebox-invalid{
+	background-color: #ffffff;
+}
+.textbox-invalid{
+	border-color: #95B8E7;
+}
+.easyui-tabs .tabs-panels{
+	padding:0 30px;
+}

@@ -1,0 +1,53 @@
+[{
+    "text":"产品库",
+    "iconCls":"icon-root",
+    "children":[
+    	{
+    		"iconCls":"icon-amazon",
+	        "text":"美国亚马逊",
+	        "state":"closed",
+	        "checked":true,
+	        "children":[{
+	        	"id":1,
+	        	"iconCls":"icon-fresh",
+	            "text":"only精华液",
+	            "checked":true
+	        }]
+	    },{
+	    	"iconCls":"icon-amazon",
+	        "text":"日本亚马逊",
+	        "state":"closed",
+	        "children":[{
+	        	"id":2,
+	        	"iconCls":"icon-fresh",
+	            "text":"花王尿不湿",
+	            "checked":true
+	        }]
+	    },{
+	    	"iconCls":"icon-amazon",
+	        "text":"澳洲亚马逊"
+	        
+	    },{
+	    	"iconCls":"icon-amazon",
+	        "text":"德国亚马逊"
+	        
+	    },{
+	    	"iconCls":"icon-amazon",
+	        "text":"英国亚马逊"
+	        
+	    },{
+	    	"iconCls":"icon-amazon",
+	        "text":"法国亚马逊"
+	        
+	    },{
+	    	"iconCls":"icon-amazon",
+	        "text":"意大利亚马逊"
+	        
+	    },{
+	    	"iconCls":"icon-ebay",
+	        "text":"eBay"
+	        
+	    }
+
+	]
+}]

@@ -1,0 +1,60 @@
+var goodArr=[
+	{
+		id:"B009GEUPMY",//only精华液
+		name:"美亚only精华液",//可选项
+		smid:"ATVPDKIKX0DER",
+		phones:"13862415366,15150181446",
+		country:"www.amazon.com",
+		threshold:"20$"
+	},{
+		id:"B01IN8LBJ4",//剃须刀
+		name:"英亚剃须刀",//可选项
+		smid:"A3P5ROKL5A1OLE",
+		phones:"13862415366,15150181446",
+		country:"www.amazon.co.uk"
+	},{
+		id:"B00803ZBCQ",//帽子
+		name:"New Era Men's帽子黑色",//可选项
+		smid:"A38UDII8M9Z5GS",
+		phones:"13862415366,15150181446",
+		country:"www.amazon.co.uk"
+	},{
+		id:"B018T7DI4A",//玫红洗脸仪
+		name:"意亚玫红洗脸仪",//可选项
+		smid:"A11IL2PNWYJU7H",
+		phones:"13862415366,15150181446",
+		country:"www.amazon.it"
+	},{
+		id:"B018T7DHVY",//
+		name:"意亚粉红洗脸仪",//可选项
+		smid:"A11IL2PNWYJU7H",
+		phones:"13862415366,15150181446",
+		country:"www.amazon.it"
+	},{
+		id:"B01DW6UNNW",//鞋
+		name:"美亚阿迪达斯鞋",//可选项
+		smid:"ATVPDKIKX0DER",
+		phones:"13862415366,15150181446,15257022320",
+		country:"www.amazon.com"
+	},{
+		id:"B018T7DI4A",//
+		name:"德亚玫红洗脸仪",//可选项
+		smid:"A3JWKAKR8XB7XF",
+		phones:"13862415366,15150181446",
+		country:"www.amazon.de"
+	},{
+		id:"B018T7DHVY",
+		name:"德亚粉红洗脸仪",//可选项
+		smid:"A3JWKAKR8XB7XF",
+		phones:"13862415366,15150181446",
+		country:"www.amazon.de"
+	},{
+		id:"B01N63Q6RH",
+		name:"Silk'n Jewel 100 000",//可选项
+		smid:"A1X6FK5RDHNB96",
+		phones:"13862415366,15150181446",
+		country:"www.amazon.fr"
+	}
+
+];
+exports.priceNotice=goodArr;

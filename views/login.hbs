@@ -1,0 +1,121 @@
+<div class="content">
+    <div class="blank"></div>
+    <div class="easyui-panel" title="登录" style="max-width:400px;min-width:320px;width:95%;padding:30px 60px;">
+        <form id="ff" method="post" action="/login">
+            <div style="margin-bottom:20px">
+                <input class="easyui-textbox" id="userName" name="userName" prompt="请输入账号" data-options="iconCls:'icon-man',required:true" iconWidth="28" style="width:100%;height:34px;padding:10px;">
+            </div>
+            <div style="margin-bottom:20px">
+                <input class="easyui-passwordbox" id="password" name="password" prompt="请输入密码" data-options="required:true" iconWidth="28" style="width:100%;height:34px;padding:10px">
+            </div>
+        </form>
+        <div style="text-align:center;padding:5px 0">
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="submitForm()" style="width:100%">登录</a>
+        </div>
+    </div> 
+    <!-- <div id="tt" class="easyui-tabs" data-options="justified:true" style="max-width:400px;min-width:320px;width:95%;padding:0px 0px;">
+        <div title="登录" style="padding:20px;display:none;">
+            <form id="ff" method="post" action="/login" style="max-width: 298px;">
+                <div style="margin-bottom:20px">
+                    <input class="easyui-textbox" id="userName" name="userName" prompt="请输入账号" data-options="iconCls:'icon-man',required:true" iconWidth="28" style="width:100%;height:34px;padding:10px;">
+                </div>
+                <div style="margin-bottom:20px">
+                    <input class="easyui-passwordbox" id="password" name="password" prompt="请输入密码" data-options="required:true" iconWidth="28" style="width:100%;height:34px;padding:10px">
+                </div>
+                <div style="text-align:center;padding:5px 0">
+                    <a href="javascript:void(0)" class="easyui-linkbutton" onclick="submitForm()" style="width:100%">登录</a>
+                </div>
+            </form>
+            
+        </div>
+        <div title="注册" data-options="closable:false" style="overflow:auto;padding:20px;display:none;">
+            联系QQ:382229841
+            <form id="ff2" method="post" action="/register" style="max-width: 298px;">
+                <div style="margin-bottom:20px">
+                    <input class="easyui-textbox" id="account" name="account" prompt="请设置账号" data-options="iconCls:'icon-man',required:true" iconWidth="28" style="width:100%;height:34px;padding:10px;">
+                </div>
+                <div style="margin-bottom:20px">
+                    <input class="easyui-passwordbox" id="password2" name="password" prompt="请输入密码" data-options="required:true" iconWidth="28" style="width:100%;height:34px;padding:10px">
+                </div>
+                <div style="margin-bottom:20px">
+                    <input class="easyui-passwordbox" id="rpassword2" name="rpassword" prompt="请输再次入密码" data-options="required:true" iconWidth="28"  validType="equals['#password2']" style="width:100%;height:34px;padding:10px">
+                </div>
+                <div style="text-align:center;padding:5px 0">
+                    <a href="javascript:void(0)" class="easyui-linkbutton" onclick="submitForm(2)" style="width:100%">注册</a>
+                </div>
+            </form>
+            
+        </div>
+    </div> -->
+</div>
+<script>
+var rUrl = getQuery().redirectUrl || '/';
+$("#url").val(rUrl)
+
+function submitForm(index) {
+    if(index==2){
+        $('#ff2').form('submit');
+    }else{
+        $('#ff').form('submit');
+    }
+}
+
+function clearForm() {
+    $('#ff').form('clear');
+}
+function toast(msg){
+    $.messager.show({
+        title: '',
+        msg: msg,
+        timeout: 1500,
+        showType:'show',
+        style:{
+            right:'',
+            top:document.body.scrollTop+document.documentElement.scrollTop,
+            bottom:''
+        }
+    })
+}
+$('#ff').form({
+    success: function(data) {
+        data = JSON.parse(data);
+        if (data.status === 200 && data.data == true) {
+            location.href = rUrl;
+            localStorage.setItem("account", $("#userName").val());
+            /*localStorage.setItem("password",$("#password").val());*/
+        } else {
+            $.messager.alert(data.msg || '提示', '用户名密码错误，请重试。');
+        }
+    }
+});
+$('#ff2').form({
+    success: function(data) {
+        data = JSON.parse(data);
+        if (data.status == 200 && data.data == true) {
+            toast("恭喜! 注册成功，请登录");
+            $('#tt').tabs('select',0)
+            /*localStorage.setItem("password",$("#password").val());*/
+        }else if(data.status == 201){
+            $.messager.alert('提示', '已被注册，请换个账号重试');
+        } else {
+            $.messager.alert(data.msg || '提示', '用户名密码错误，请重试。');
+        }
+    }
+});
+$("#userName").val(localStorage.getItem("account"));
+/*$("#password").val(localStorage.getItem("password"));*/
+
+$('#tt').tabs({
+    justified:true,
+    onSelect:function(title){
+        
+    }
+});
+var index=0;
+if(getQuery() && getQuery().type){
+    index=getQuery().type;
+    index=parseInt(index) || 0;
+}
+
+$('#tt').tabs('select',index)
+</script>
