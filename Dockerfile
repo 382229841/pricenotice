@@ -1,17 +1,12 @@
-# AMAZON
-#
-# VERSION    1.0.0
-
 FROM node
-MAINTAINER 382229841@qq.com
 
-ENV PORT 3000
+# Build app
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
+COPY . /usr/src/app
 
-COPY . /app  
-WORKDIR /app
-
-RUN npm install
+RUN npm install --production
 
 EXPOSE 3000
 
-CMD ["npm", "start"]  
+CMD [ "npm","start"]
