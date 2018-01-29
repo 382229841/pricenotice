@@ -429,9 +429,7 @@ rule.minute = [0, 15, 30, 45];
 //job start
 var j = schedule.scheduleJob(rule, function() {
   if(process.env.NODE_ENV==="product"){
-      //priceJob(); //移除10.15
-      //instockJob(); //移除10.18
-      priceJobByUrl();
+      //priceJobByUrl();
   }
   
 });
