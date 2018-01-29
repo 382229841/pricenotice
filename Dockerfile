@@ -1,4 +1,4 @@
-FROM node
+FROM node:8.4.0
 
 # Build app
 RUN mkdir -p /usr/src/app

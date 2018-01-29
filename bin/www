@@ -156,7 +156,7 @@ function getPriceByUrl(cb,url,phones,name,type,goodId,good){
       method: 'GET',
       url: getRequest(url).url,
       qs: getRequest(url).qs,
-      timeout:5*60000,
+      timeout:180000,
       headers: 
       {
          'cache-control': 'no-cache' 
@@ -429,7 +429,7 @@ rule.minute = [0, 15, 30, 45];
 //job start
 var j = schedule.scheduleJob(rule, function() {
   if(process.env.NODE_ENV==="product"){
-      //priceJobByUrl();
+      priceJobByUrl();
   }
   
 });
