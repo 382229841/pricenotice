@@ -374,6 +374,8 @@ var priceJobByUrl=function(){
             console.log(`${i+1}-${good.name};${good.noticePhone}`)
             //if(good.noticeType==2)
             if(good.status==1){
+                setTimeout(function(){
+
                 getPriceByUrl(function(isOk,price,title,phones,o){
                     //console.log("result:",JSON.stringify(o))
                     if(isOk){
@@ -417,6 +419,8 @@ var priceJobByUrl=function(){
 
                     }
                 },good.url,good.noticePhone,good.name,good.noticeType,good.id,good);
+
+                },300);
             }
         }
     })
