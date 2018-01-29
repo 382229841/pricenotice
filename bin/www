@@ -369,60 +369,60 @@ var priceJobByUrl=function(){
         //console.log("monitorPool:",JSON.stringify(monitorPool));
         //return;
         goodArrByUrl=goodArrByUrl || [];
-        for(var i=0;i<goodArrByUrl.length;i++){
-            var good=goodArrByUrl[i];
-            console.log(`${i+1}-${good.name};${good.noticePhone}`)
-            //if(good.noticeType==2)
-            if(good.status==1){
-                setTimeout(function(){
-
-                getPriceByUrl(function(isOk,price,title,phones,o){
-                    //console.log("result:",JSON.stringify(o))
-                    if(isOk){
-                        var tmpStock=o.stock?1:0;
-                        if(price)
-                            updatePriceAndStock(price,tmpStock,o.goodId);
-                        
-                        var key=o.goodId;
-                        var newPrice=strPrice2Float(price);
-                        var oldPrice=strPrice2Float(monitorPool[key]);
-                        var expectPrice=strPrice2Float(o.expectPrice);
-                        console.log(`newPrice ${title}:`,newPrice)
-                        console.log(`oldPrice ${title}:`,oldPrice)
-                        
-                        if(o.noticeType==1 || o.noticeType==0){
-                            if(o.expectPrice && (newPrice==expectPrice || newPrice<expectPrice)){
-                                if(newPrice>0){
-                                    console.log("monitorPool price change:",JSON.stringify(monitorPool));
-                                    sendSMS(price, monitorPool[key], o.name+" "+title, phones);
-                                }
-                            }else{
-                                if(monitorPool[key] && newPrice!=oldPrice && newPrice<oldPrice){
+        //
+        setTimeout(function(){
+            for(var i=0;i<goodArrByUrl.length;i++){
+                var good=goodArrByUrl[i];
+                console.log(`${i+1}-${good.name};${good.noticePhone}`)
+                //if(good.noticeType==2)
+                if(good.status==1){
+                    getPriceByUrl(function(isOk,price,title,phones,o){
+                        //console.log("result:",JSON.stringify(o))
+                        if(isOk){
+                            var tmpStock=o.stock?1:0;
+                            if(price)
+                                updatePriceAndStock(price,tmpStock,o.goodId);
+                            
+                            var key=o.goodId;
+                            var newPrice=strPrice2Float(price);
+                            var oldPrice=strPrice2Float(monitorPool[key]);
+                            var expectPrice=strPrice2Float(o.expectPrice);
+                            console.log(`newPrice ${title}:`,newPrice)
+                            console.log(`oldPrice ${title}:`,oldPrice)
+                            
+                            if(o.noticeType==1 || o.noticeType==0){
+                                if(o.expectPrice && (newPrice==expectPrice || newPrice<expectPrice)){
                                     if(newPrice>0){
                                         console.log("monitorPool price change:",JSON.stringify(monitorPool));
                                         sendSMS(price, monitorPool[key], o.name+" "+title, phones);
                                     }
                                 }else{
-                                    monitorPool[key]=price;
+                                    if(monitorPool[key] && newPrice!=oldPrice && newPrice<oldPrice){
+                                        if(newPrice>0){
+                                            console.log("monitorPool price change:",JSON.stringify(monitorPool));
+                                            sendSMS(price, monitorPool[key], o.name+" "+title, phones);
+                                        }
+                                    }else{
+                                        monitorPool[key]=price;
+                                    }
+                                }
+                                console.log("monitorPool:",JSON.stringify(monitorPool));
+                            }
+                            if(o.noticeType==2 || o.noticeType==0){
+                                if(o.stock){
+                                    console.log("monitorPool stock change:",JSON.stringify(monitorPool));
+                                    sendStockSMS(price, o.name+" "+title, phones);
                                 }
                             }
-                            console.log("monitorPool:",JSON.stringify(monitorPool));
+
+                        }else{
+
                         }
-                        if(o.noticeType==2 || o.noticeType==0){
-                            if(o.stock){
-                                console.log("monitorPool stock change:",JSON.stringify(monitorPool));
-                                sendStockSMS(price, o.name+" "+title, phones);
-                            }
-                        }
-
-                    }else{
-
-                    }
-                },good.url,good.noticePhone,good.name,good.noticeType,good.id,good);
-
-                },300);
+                    },good.url,good.noticePhone,good.name,good.noticeType,good.id,good);                
+                }
             }
-        }
+        },300);
+        //
     })
     
 }
