@@ -421,7 +421,7 @@ var priceJobByUrl=function(){
                     },good.url,good.noticePhone,good.name,good.noticeType,good.id,good);                
                 }
             }
-        },300);
+        },2000);
         //
     })
     
