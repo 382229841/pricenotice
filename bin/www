@@ -370,7 +370,7 @@ var priceJobByUrl=function(){
         //return;
         goodArrByUrl=goodArrByUrl || [];
         //
-        setTimeout(function(){
+        /*setTimeout(function(){
             for(var i=0;i<goodArrByUrl.length;i++){
                 var good=goodArrByUrl[i];
                 console.log(`${i+1}-${good.name};${good.noticePhone}`)
@@ -421,7 +421,7 @@ var priceJobByUrl=function(){
                     },good.url,good.noticePhone,good.name,good.noticeType,good.id,good);                
                 }
             }
-        },30000);
+        },30000);*/
         //
     })
     
@@ -429,7 +429,7 @@ var priceJobByUrl=function(){
 //定时任务
 var rule = new schedule.RecurrenceRule();
 //rule.second = [10];
-rule.minute = [0, 20, 40];
+rule.minute = [0, 10,20, 40,45,50];
 //job start
 var j = schedule.scheduleJob(rule, function() {
   if(process.env.NODE_ENV==="product"){
