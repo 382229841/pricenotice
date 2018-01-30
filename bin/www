@@ -333,7 +333,7 @@ function updatePriceAndStock(price,stock,id){
         }        
     });
 }
-let Ut = require("./delay");  
+let Ut = require("./../delay");  
 var priceJobByUrl=function(){
     //var goodArrByUrl = require('./../priceNoticeByUrl.js').priceNoticeByUrl;
 
@@ -448,7 +448,7 @@ var priceJobByUrl=function(){
 //定时任务
 var rule = new schedule.RecurrenceRule();
 //rule.second = [10];
-rule.minute = [5,15,30,45];
+rule.minute = [0,8,15,30,45];
 //job start
 var j = schedule.scheduleJob(rule, function() {
   if(process.env.NODE_ENV==="product"){
