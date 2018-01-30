@@ -421,7 +421,7 @@ var priceJobByUrl=function(){
                     },good.url,good.noticePhone,good.name,good.noticeType,good.id,good);                
                 }
             }
-        },2000);
+        },30000);
         //
     })
     
@@ -429,7 +429,7 @@ var priceJobByUrl=function(){
 //定时任务
 var rule = new schedule.RecurrenceRule();
 //rule.second = [10];
-rule.minute = [0, 15, 30, 45];
+rule.minute = [0, 20, 40];
 //job start
 var j = schedule.scheduleJob(rule, function() {
   if(process.env.NODE_ENV==="product"){
