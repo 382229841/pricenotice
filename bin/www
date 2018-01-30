@@ -98,6 +98,22 @@ function getNoticeInfo(body,url,name,type){
           isInStock=true;
         }        
 
+    }else if(url.indexOf("www.walmart.com")>-1){
+        priceBox = dom.window.document.querySelector(".prod-PriceHero.Price-Hero-Enhanced");
+        console.log(`dom${type} ${priceBox}`, priceBox?priceBox.textContent : "0666666666666666666666666666")
+        console.log(`-------------------dom----${name}-----------------`)
+        if (priceBox) {
+            price = priceBox.textContent || "0"; //priceblock_dealprice
+        }
+        if (price) {
+            price = price.trim();
+        }
+        stockBox=dom.window.document.querySelector(".ProductCTAAddToCart");
+        console.log(`-------------------stock walmart dom(style display:${stockBox})----------`)
+        if(stockBox){
+          isInStock=true;
+        }        
+
     }else{
         // price
         priceBox = dom.window.document.querySelector("#prcIsum") ||  //ebay
