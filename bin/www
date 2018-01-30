@@ -370,12 +370,13 @@ var priceJobByUrl=function(){
         //return;
         goodArrByUrl=goodArrByUrl || [];
         //
-        /*setTimeout(function(){
-            for(var i=0;i<goodArrByUrl.length;i++){
-                var good=goodArrByUrl[i];
-                console.log(`${i+1}-${good.name};${good.noticePhone}`)
-                //if(good.noticeType==2)
-                if(good.status==1){
+        //setTimeout(function(){
+        for(var i=0;i<goodArrByUrl.length;i++){
+            var good=goodArrByUrl[i];
+            console.log(`${i+1}-${good.name};${good.noticePhone}`)
+            //if(good.noticeType==2)
+            if(good.status==1){
+                setTimeout(function(){
                     getPriceByUrl(function(isOk,price,title,phones,o){
                         //console.log("result:",JSON.stringify(o))
                         if(isOk){
@@ -418,10 +419,11 @@ var priceJobByUrl=function(){
                         }else{
 
                         }
-                    },good.url,good.noticePhone,good.name,good.noticeType,good.id,good);                
-                }
+                    },good.url,good.noticePhone,good.name,good.noticeType,good.id,good);    
+                },30000);            
             }
-        },30000);*/
+        }
+        //},30000);
         //
     })
     
@@ -429,7 +431,7 @@ var priceJobByUrl=function(){
 //定时任务
 var rule = new schedule.RecurrenceRule();
 //rule.second = [10];
-rule.minute = [0, 10,20, 40,45,50];
+rule.minute = [0,15,30,45];
 //job start
 var j = schedule.scheduleJob(rule, function() {
   if(process.env.NODE_ENV==="product"){
