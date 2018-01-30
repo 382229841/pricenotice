@@ -333,7 +333,7 @@ function updatePriceAndStock(price,stock,id){
         }        
     });
 }
-
+let Ut = require("./delay");  
 var priceJobByUrl=function(){
     //var goodArrByUrl = require('./../priceNoticeByUrl.js').priceNoticeByUrl;
 
@@ -386,60 +386,61 @@ var priceJobByUrl=function(){
         //return;
         goodArrByUrl=goodArrByUrl || [];
         //
-        //setTimeout(function(){
-        for(var i=0;i<goodArrByUrl.length;i++){
-            var good=goodArrByUrl[i];
-            console.log(`${i+1}-${good.name};${good.noticePhone}`)
-            //if(good.noticeType==2)
-            if(good.status==1){
-                setTimeout(function(){
-                    getPriceByUrl(function(isOk,price,title,phones,o){
-                        //console.log("result:",JSON.stringify(o))
-                        if(isOk){
-                            var tmpStock=o.stock?1:0;
-                            if(price)
-                                updatePriceAndStock(price,tmpStock,o.goodId);
-                            
-                            var key=o.goodId;
-                            var newPrice=strPrice2Float(price);
-                            var oldPrice=strPrice2Float(monitorPool[key]);
-                            var expectPrice=strPrice2Float(o.expectPrice);
-                            console.log(`newPrice ${title}:`,newPrice)
-                            console.log(`oldPrice ${title}:`,oldPrice)
-                            
-                            if(o.noticeType==1 || o.noticeType==0){
-                                if(o.expectPrice && (newPrice==expectPrice || newPrice<expectPrice)){
-                                    if(newPrice>0){
-                                        console.log("monitorPool price change:",JSON.stringify(monitorPool));
-                                        sendSMS(price, monitorPool[key], o.name+" "+title, phones);
-                                    }
-                                }else{
-                                    if(monitorPool[key] && newPrice!=oldPrice && newPrice<oldPrice){
+        (async () => { 
+            for(var i=0;i<goodArrByUrl.length;i++){
+                console.time("第"+i+"次延迟"); 
+                var good=goodArrByUrl[i];
+                console.log(`${i+1}-${good.name};${good.noticePhone}`)
+                //if(good.noticeType==2)
+                if(good.status==1){                
+                        getPriceByUrl(function(isOk,price,title,phones,o){
+                            //console.log("result:",JSON.stringify(o))
+                            if(isOk){
+                                var tmpStock=o.stock?1:0;
+                                if(price)
+                                    updatePriceAndStock(price,tmpStock,o.goodId);
+                                
+                                var key=o.goodId;
+                                var newPrice=strPrice2Float(price);
+                                var oldPrice=strPrice2Float(monitorPool[key]);
+                                var expectPrice=strPrice2Float(o.expectPrice);
+                                console.log(`newPrice ${title}:`,newPrice)
+                                console.log(`oldPrice ${title}:`,oldPrice)
+                                
+                                if(o.noticeType==1 || o.noticeType==0){
+                                    if(o.expectPrice && (newPrice==expectPrice || newPrice<expectPrice)){
                                         if(newPrice>0){
                                             console.log("monitorPool price change:",JSON.stringify(monitorPool));
                                             sendSMS(price, monitorPool[key], o.name+" "+title, phones);
                                         }
                                     }else{
-                                        monitorPool[key]=price;
+                                        if(monitorPool[key] && newPrice!=oldPrice && newPrice<oldPrice){
+                                            if(newPrice>0){
+                                                console.log("monitorPool price change:",JSON.stringify(monitorPool));
+                                                sendSMS(price, monitorPool[key], o.name+" "+title, phones);
+                                            }
+                                        }else{
+                                            monitorPool[key]=price;
+                                        }
+                                    }
+                                    console.log("monitorPool:",JSON.stringify(monitorPool));
+                                }
+                                if(o.noticeType==2 || o.noticeType==0){
+                                    if(o.stock){
+                                        console.log("monitorPool stock change:",JSON.stringify(monitorPool));
+                                        sendStockSMS(price, o.name+" "+title, phones);
                                     }
                                 }
-                                console.log("monitorPool:",JSON.stringify(monitorPool));
-                            }
-                            if(o.noticeType==2 || o.noticeType==0){
-                                if(o.stock){
-                                    console.log("monitorPool stock change:",JSON.stringify(monitorPool));
-                                    sendStockSMS(price, o.name+" "+title, phones);
-                                }
-                            }
 
-                        }else{
+                            }else{
 
-                        }
-                    },good.url,good.noticePhone,good.name,good.noticeType,good.id,good);    
-                },30000);            
+                            }
+                        },good.url,good.noticePhone,good.name,good.noticeType,good.id,good);                            
+                }
+                await Ut.sleep(2000);
+                console.timeEnd("第"+i+"次延迟");
             }
-        }
-        //},30000);
+        })()  
         //
     })
     
@@ -447,7 +448,7 @@ var priceJobByUrl=function(){
 //定时任务
 var rule = new schedule.RecurrenceRule();
 //rule.second = [10];
-rule.minute = [0,15,30,45];
+rule.minute = [5,15,30,45];
 //job start
 var j = schedule.scheduleJob(rule, function() {
   if(process.env.NODE_ENV==="product"){
